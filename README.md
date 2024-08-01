@@ -1,3 +1,11 @@
+# nombre de las bases de datos.
+    msvc_church_db
+    msvc_ministerial_db
+    msvc_rol_db
+    msvc_team_pesca_db
+    msvc_user_db
+la base de datos la tiene que crear manuel en postgreSQL.
+
 
 # microservice_church_golang
 1 . dentro del microservice_church_golang ejecutar este comando:  go run main.go
