@@ -24,7 +24,7 @@ func NewUserMinistrialService() IUserMinisterialService {
 func (s *userMinitsrialService) GetMinisterialAndUserByIdFindAll(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params(utils.ID))
 
-	results, err := s.IuserMinisterial.GetMinisterialAndUserByIdFindAll(uint(id))
+	result, err := s.IuserMinisterial.GetMinisterialAndUserByIdFindAll(uint(id))
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			utils.STATUS:  http.StatusBadRequest,
@@ -32,7 +32,10 @@ func (s *userMinitsrialService) GetMinisterialAndUserByIdFindAll(c *fiber.Ctx) e
 		})
 	}
 
-	return c.Status(http.StatusOK).JSON(results)
+	return c.Status(http.StatusOK).JSON(fiber.Map{
+		utils.STATUS: http.StatusOK,
+		utils.DATA:   result,
+	})
 
 }
 

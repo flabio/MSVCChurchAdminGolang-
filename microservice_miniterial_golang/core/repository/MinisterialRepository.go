@@ -28,7 +28,7 @@ func (db *OpenConnection) GetMinisterialAll() ([]entities.Ministerial, error) {
 	db.mux.Lock()
 	result := db.connection.Order(utils.DB_ORDER_DESC).Find(&ministerials)
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
+	defer database.Closedb()
 	return ministerials, result.Error
 }
 func (db *OpenConnection) GetMinisterialFindById(id uint) (entities.Ministerial, error) {
@@ -36,7 +36,7 @@ func (db *OpenConnection) GetMinisterialFindById(id uint) (entities.Ministerial,
 	db.mux.Lock()
 	result := db.connection.Find(&ministerial, id)
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
+	defer database.Closedb()
 	return ministerial, result.Error
 }
 func (db *OpenConnection) GetMinisterialFindByName(id uint, name string) (bool, error) {
@@ -49,7 +49,7 @@ func (db *OpenConnection) GetMinisterialFindByName(id uint, name string) (bool, 
 	}
 
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
+	defer database.Closedb()
 	if query.RowsAffected == 1 {
 		return true, query.Error
 	}
@@ -59,7 +59,7 @@ func (db *OpenConnection) CreateMinisterial(ministerial entities.Ministerial) (e
 	db.mux.Lock()
 	result := db.connection.Create(&ministerial)
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
+	defer database.Closedb()
 	return ministerial, result.Error
 }
 func (db *OpenConnection) UpdateMinisterial(id uint, ministerial entities.Ministerial) (entities.Ministerial, error) {
@@ -67,13 +67,13 @@ func (db *OpenConnection) UpdateMinisterial(id uint, ministerial entities.Minist
 	result := db.connection.Where(utils.DB_EQUAL_ID, id).Updates(&ministerial)
 	db.connection.Find(&ministerial, id)
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
+	defer database.Closedb()
 	return ministerial, result.Error
 }
 func (db *OpenConnection) DeleteMinisterial(id uint) (bool, error) {
 	db.mux.Lock()
 	result := db.connection.Where(utils.DB_EQUAL_ID, id).Delete(&entities.Ministerial{})
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
+	defer database.Closedb()
 	return true, result.Error
 }

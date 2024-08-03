@@ -5,14 +5,16 @@ const (
 	MESSAGE = "message"
 	STATUS  = "status"
 	DATA    = "data"
-
+	GET     = "GET"
 	SUCCESS = "success"
 	FAIL    = "fail"
 	CREATED = "was successfully created"
 	UPDATED = "was updated successfully"
 	REMOVED = "was successfully removed"
 )
-
+const (
+	MSVC_USER_URL = "http://localhost:3006/api/user/"
+)
 const (
 	ID_NO_EXIST        = "The id not exists"
 	NAME_ALREADY_EXIST = "name already exists"
