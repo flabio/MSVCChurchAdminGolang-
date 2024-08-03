@@ -1,14 +1,18 @@
 package ministerial
 
+import "time"
+
 type Ministerial struct {
-	Id     uint
-	Name   string
-	Active bool
+	Active    bool
+	CreatedAt time.Time
+	UpdatedAt *time.Time
+	Id        uint
+	Name      string
 }
 
 type UserMinisterial struct {
 	Id            uint
+	Ministerial   []Ministerial
 	MinisterialId uint
 	UserId        uint
-	Ministerial   []Ministerial
 }

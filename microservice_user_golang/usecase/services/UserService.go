@@ -14,6 +14,7 @@ import (
 	"microservice_user.com/usecase/client"
 	"microservice_user.com/usecase/client/church"
 	"microservice_user.com/usecase/client/ministerial"
+
 	"microservice_user.com/usecase/client/rol"
 	"microservice_user.com/usecase/client/teams"
 	"microservice_user.com/usecase/dto"
@@ -58,7 +59,7 @@ func (s *userService) GetUsersMembersFindAll(c *fiber.Ctx) error {
 		var churchs []church.Church
 		var teamsPesca []teams.Team
 		var rols []rol.Rol
-		var userMinisterials []ministerial.UserMinisterial
+		//var ministerials []ministerial.UserMinisterial
 
 		userResponseDate.Id = item.Id
 		userResponseDate.FirstName = item.FirstName
@@ -77,9 +78,9 @@ func (s *userService) GetUsersMembersFindAll(c *fiber.Ctx) error {
 		teamsPesca = append(teamsPesca, dataTeam)
 		userResponseDate.Team = teamsPesca
 
-		dataUserMinisterial := ministerial.MsvcUserMInisterialFindById(item.Id)
-		userMinisterials = append(userMinisterials, dataUserMinisterial)
-		userResponseDate.UserMinisterial = userMinisterials
+		dataMinisterial := ministerial.MsvcUserMInisterialFindById(item.Id)
+		//ministerials = append(ministerials, dataMinisterila)
+		userResponseDate.UserMinisterial = dataMinisterial
 		userR = append(userR, userResponseDate)
 	}
 	return c.Status(http.StatusOK).JSON(fiber.Map{
@@ -88,6 +89,7 @@ func (s *userService) GetUsersMembersFindAll(c *fiber.Ctx) error {
 	})
 }
 func (s *userService) GetUserFindById(c *fiber.Ctx) error {
+
 	id, _ := strconv.Atoi(c.Params(utils.ID))
 
 	result, err := s.IUser.GetUserFindById(uint(id))
@@ -103,10 +105,8 @@ func (s *userService) GetUserFindById(c *fiber.Ctx) error {
 			utils.MESSAGE: utils.ID_NO_EXIST,
 		})
 	}
-	return c.Status(http.StatusOK).JSON(fiber.Map{
-		utils.STATUS: http.StatusOK,
-		utils.DATA:   result,
-	})
+
+	return c.Status(http.StatusOK).JSON(result)
 }
 func (s *userService) CreateUser(c *fiber.Ctx) error {
 	var user entities.User

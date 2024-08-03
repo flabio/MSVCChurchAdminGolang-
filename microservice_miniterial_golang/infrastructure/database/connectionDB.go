@@ -31,11 +31,16 @@ func DatabaseConnection() *gorm.DB {
 }
 
 // Close database connection method is closin a connection between your app db
-func CloseConnection() {
-	var db *gorm.DB = DatabaseConnection()
+
+func CloseConnection(db *gorm.DB) {
 	dbSQL, err := db.DB()
 	if err != nil {
-		panic("Failed to close connection from database")
+		panic(err.Error())
 	}
 	dbSQL.Close()
+}
+
+func Closedb() {
+	var db *gorm.DB = DatabaseConnection()
+	CloseConnection(db)
 }

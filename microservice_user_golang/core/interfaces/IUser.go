@@ -1,10 +1,13 @@
 package interfaces
 
-import "microservice_user.com/infrastructure/entities"
+import (
+	"microservice_user.com/infrastructure/entities"
+	"microservice_user.com/usecase/dto"
+)
 
 type IUser interface {
 	GetUserFindAll() ([]entities.User, error)
-	GetUserFindById(id uint) (entities.User, error)
+	GetUserFindById(id uint) (dto.UserResposeDTO, error)
 	GetUsersMembersFindAll() ([]entities.User, error)
 	GetUserFindByName(id uint, name string) (bool, error)
 	GetUserFindByEmail(id uint, email string) (bool, error)

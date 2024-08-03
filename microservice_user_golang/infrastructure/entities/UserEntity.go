@@ -8,13 +8,13 @@ type User struct {
 	LastName           string     `gorm:"type:varchar(255);not null" json:"last_name"`
 	Identification     string     `gorm:"type:varchar(255);not null" json:"identification"`
 	TypeIdentification string     `gorm:"type:varchar(6);" json:"type_identification"`
-	Birthdate          string     `gorm:"type:varchar(10)" json:"birthdate"`
+	Birthdate          string     `gorm:"type:varchar(10)" json:"birth_date"`
 	PlaceOfBirth       string     `gorm:"type:text" json:"place_of_birth"`
 	Address            string     `gorm:"type:varchar(100)" json:"address"`
 	Phone              string     `gorm:"type:varchar(20)" json:"phone"`
-	Cellphone          string     `gorm:"type:varchar(20)" json:"cellphone"`
+	Cellphone          string     `gorm:"type:varchar(20)" json:"cell_phone"`
 	Email              string     `gorm:"type:text" json:"email"`
-	Neighborhood       string     `gorm:"type:text" json:"neighborhood"`
+	Neighborhood       string     `gorm:"type:text" json:"neigh_borhood"`
 	Locality           string     `gorm:"type:text" json:"locality"`
 	Socioeconomic      uint       `gorm:"type:integer" json:"socio_economic"`
 	Rh                 string     `gorm:"type:varchar(6)" json:"rh"`
@@ -22,16 +22,16 @@ type User struct {
 	Company            string     `gorm:"type:text" json:"company"`
 	Position           string     `gorm:"type:text" json:"position"`
 	CivilStatus        string     `gorm:"type:varchar(50)" json:"civil_status"`
-	LeadersName        string     `gorm:"type:text" json:"leader_name"`
+	LeadersName        string     `gorm:"type:text" json:"leaders_name"`
 	ConversionDate     string     `gorm:"type:varchar(10)" json:"conversion_date"`
-	WhoInvitedHim      string     `gorm:"type:text" json:"who_invited_him"`
+	WhoInvitedHim      string     `gorm:"type:text" json:"who_in_vited_him"`
 	ChurchAttended     bool       `gorm:"type:boolean" json:"church_attended"`
 	ChurchName         string     `gorm:"type:varchar(250)" json:"church_name"`
-	MeetingDate        string     `gorm:"type:varchar(10)" json:"meetings_date"`
+	MeetingDate        string     `gorm:"type:varchar(10)" json:"meeting_date"`
 	BaptismDate        string     `gorm:"type:varchar(10)" json:"baptism_date"`
 	YourSpouseName     string     `gorm:"type:varchar(250)" json:"your_spouse_name"`
 	SpouseMemberChurch bool       `gorm:"type:boolean" json:"spouse_member_church"`
-	DateMarriage       string     `gorm:"type:varchar(10)" jon:"date_marriage"`
+	DateMarriage       string     `gorm:"type:varchar(10)" json:"date_marriage"`
 	ParentsName        string     `gorm:"type:varchar(250)" json:"parents_name"`
 	IsMemberParent     bool       `gorm:"type:boolean" json:"is_member_parent"`
 	ChildrenaName      string     `gorm:"type:varchar(250)" json:"childrena_name"`

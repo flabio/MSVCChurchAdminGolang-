@@ -22,27 +22,27 @@ func UserMinisterialInstance() interfaces.IUserMinisterial {
 	return _OPEN
 }
 
-func (db *OpenConnection) GetMinisterialAndUserByIdFindAll(userId uint) ([]entities.UserMinisterial, error) {
+func (db *OpenConnection) GetMinisterialAndUserByIdFindAll(userId uint) ([]entities.Ministerial, error) {
 
-	var ministerials []entities.UserMinisterial
+	var ministerials []entities.Ministerial
 	db.mux.Lock()
 
-	result := db.connection.Preload(utils.DB_MINISTERIAL).Where(utils.DB_EQUAL_USER_ID, userId).Find(&ministerials)
+	result := db.connection.Table("ministerials").Select("ministerials.*").Joins("left join user_ministerials on user_ministerials.ministerial_id = ministerials.id").Where(utils.DB_EQUAL_USER_ID, userId).Find(&ministerials)
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
+	defer database.Closedb()
 	return ministerials, result.Error
 }
 func (db *OpenConnection) AddUserToMinisterial(userMinisterial entities.UserMinisterial) (entities.UserMinisterial, error) {
 	db.mux.Lock()
 	result := db.connection.Create(&userMinisterial)
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
+	defer database.Closedb()
 	return userMinisterial, result.Error
 }
 func (db *OpenConnection) DeleteUserMinisterial(id uint) (bool, error) {
 	db.mux.Lock()
 	result := db.connection.Where(utils.DB_EQUAL_ID, id).Delete(&entities.UserMinisterial{})
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
+	defer database.Closedb()
 	return true, result.Error
 }

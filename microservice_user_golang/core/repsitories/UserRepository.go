@@ -8,6 +8,7 @@ import (
 	"microservice_user.com/infrastructure/database"
 	"microservice_user.com/infrastructure/entities"
 	"microservice_user.com/infrastructure/utils"
+	"microservice_user.com/usecase/dto"
 )
 
 type OpenConnection struct {
@@ -44,10 +45,10 @@ func (db *OpenConnection) GetUsersMembersFindAll() ([]entities.User, error) {
 	defer database.CloseConnection()
 	return users, result.Error
 }
-func (db *OpenConnection) GetUserFindById(id uint) (entities.User, error) {
-	var user entities.User
+func (db *OpenConnection) GetUserFindById(id uint) (dto.UserResposeDTO, error) {
+	var user dto.UserResposeDTO
 	db.mux.Lock()
-	result := db.connection.Find(&user, id)
+	result := db.connection.Table("users").Find(&user, id)
 	defer db.mux.Unlock()
 	defer database.CloseConnection()
 	return user, result.Error

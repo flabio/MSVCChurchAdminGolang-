@@ -3,6 +3,7 @@ package teams
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"microservice_user.com/usecase/client"
@@ -11,6 +12,11 @@ import (
 func ReponseTeamClient(data *http.Request, err error) (Team, string) {
 	var team Team
 	var msg string = ""
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("Recovered from panic:", r)
+		}
+	}()
 	if err != nil {
 		msg = err.Error()
 	}

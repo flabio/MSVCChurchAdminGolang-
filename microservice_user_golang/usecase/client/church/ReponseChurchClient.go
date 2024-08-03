@@ -3,14 +3,22 @@ package church
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
+
 	"net/http"
 
 	"microservice_user.com/usecase/client"
 )
 
 func ReponseChurchClient(data *http.Request, err error) (Church, string) {
-	var r Church
+
+	var church Church
 	var msg string = ""
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("Recovered from panic:", r)
+		}
+	}()
 	if err != nil {
 		msg = err.Error()
 	}
@@ -27,6 +35,7 @@ func ReponseChurchClient(data *http.Request, err error) (Church, string) {
 	if errJson != nil {
 		msg = errJson.Error()
 	}
-	client.MapToStruct(dataMap, &r)
-	return r, msg
+
+	client.MapToStruct(dataMap, &church)
+	return church, msg
 }
