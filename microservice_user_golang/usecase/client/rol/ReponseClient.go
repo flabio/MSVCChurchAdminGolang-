@@ -3,6 +3,7 @@ package rol
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"microservice_user.com/usecase/client"
@@ -11,7 +12,11 @@ import (
 func ReponseRolClient(data *http.Request, err error) (Rol, string) {
 	var msg string = ""
 	var rol Rol
-
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("Recovered from panic:", r)
+		}
+	}()
 	if err != nil {
 		msg = err.Error()
 	}

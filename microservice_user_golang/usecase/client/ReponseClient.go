@@ -3,11 +3,17 @@ package client
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
 func ReponseClient(data *http.Request, err error) string {
 	var msg string = ""
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("Recovered from panic:", r)
+		}
+	}()
 	if err != nil {
 		msg = err.Error()
 	}
