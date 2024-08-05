@@ -32,10 +32,7 @@ func (s *userMinitsrialService) GetMinisterialAndUserByIdFindAll(c *fiber.Ctx) e
 		})
 	}
 
-	return c.Status(http.StatusOK).JSON(fiber.Map{
-		utils.STATUS: http.StatusOK,
-		utils.DATA:   result,
-	})
+	return c.Status(http.StatusOK).JSON(result)
 
 }
 
