@@ -59,8 +59,6 @@ func (s *userService) GetUsersMembersFindAll(c *fiber.Ctx) error {
 		var churchs []church.Church
 		var teamsPesca []teams.Team
 		var rols []rol.Rol
-		//var ministerials []ministerial.UserMinisterial
-
 		userResponseDate.Id = item.Id
 		userResponseDate.FirstName = item.FirstName
 		userResponseDate.LastName = item.LastName
@@ -78,9 +76,8 @@ func (s *userService) GetUsersMembersFindAll(c *fiber.Ctx) error {
 		teamsPesca = append(teamsPesca, dataTeam)
 		userResponseDate.Team = teamsPesca
 
-		dataMinisterial := ministerial.MsvcUserMInisterialFindById(item.Id)
-		//ministerials = append(ministerials, dataMinisterila)
-		userResponseDate.UserMinisterial = dataMinisterial
+		dataMinisterials := ministerial.MsvcUserMInisterialFindById(item.Id)
+		userResponseDate.UserMinisterial = dataMinisterials
 		userR = append(userR, userResponseDate)
 	}
 	return c.Status(http.StatusOK).JSON(fiber.Map{
@@ -105,7 +102,6 @@ func (s *userService) GetUserFindById(c *fiber.Ctx) error {
 			utils.MESSAGE: utils.ID_NO_EXIST,
 		})
 	}
-
 	return c.Status(http.StatusOK).JSON(result)
 }
 func (s *userService) CreateUser(c *fiber.Ctx) error {

@@ -3,24 +3,21 @@ package ministerial
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
+
+	"microservice_user.com/usecase/client"
 )
 
-func ResponseUserMinisterialClient(data *http.Request, err error) (string, string) {
+func ResponseUserMinisterialClient(data *http.Request, err error) ([]Ministerial, string) {
 	var msg string = ""
-	//var userMinisterial UserMinisterial
-	defer func() {
-		if r := recover(); r != nil {
-			log.Println("Recovered from panic:", r)
-		}
-	}()
+	var ministerial Ministerial
+	var ministerials []Ministerial
+
 	if err != nil {
 		msg = err.Error()
-
 	}
-	clientHttp := &http.Client{}
 
+	clientHttp := &http.Client{}
 	resp, err := clientHttp.Do(data)
 	if err != nil {
 		msg = err.Error()
@@ -28,13 +25,15 @@ func ResponseUserMinisterialClient(data *http.Request, err error) (string, strin
 
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
-
-	var jsonMap map[string]interface{}
-	errJson := json.Unmarshal([]byte(body), &jsonMap)
-
-	if errJson != nil {
-		msg = errJson.Error()
+	var sliceData []map[string]interface{}
+	if err := json.Unmarshal([]byte(body), &sliceData); err == nil {
+		for _, item := range sliceData {
+			client.MapToStruct(item, &ministerial)
+			ministerials = append(ministerials, ministerial)
+		}
 	}
-	log.Println(jsonMap)
-	return string(body), msg
+	if err != nil {
+		msg = err.Error()
+	}
+	return ministerials, msg
 }
