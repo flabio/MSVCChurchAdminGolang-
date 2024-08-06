@@ -11,10 +11,12 @@ const (
 	REMOVED = "was successfully removed"
 )
 const (
-	DB_DIFF_ID              = "id <>?"
-	DB_EQUAL_ID             = "id=?"
-	DB_NAME                 = "name =?"
-	DB_ORDER_DESC       = "id desc"
+	DB_DIFF_ID  = "id <>?"
+	DB_EQUAL_ID = "id=?"
+
+	DB_NAME          = "name =?"
+	DB_ORDER_DESC    = "id desc"
+	DB_EQUAL_USER_ID = "user_id=?"
 )
 
 const (

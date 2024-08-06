@@ -19,5 +19,5 @@ func main() {
 		AllowCredentials: true, // Allow credentials
 	}))
 	routers.NewRouter(app)
-	app.Listen(":3007")
+	app.Listen(":3005")
 }
