@@ -35,7 +35,7 @@ const (
 	CHURCH_MSVC_URL                    = "http://localhost:3002/api/church/"
 	TEAM_MSVC_URL                      = "http://localhost:3003/api/team_pesca/"
 	MINISTERIAL_USER_MSVC_URL          = "http://localhost:3004/api/ministerial/user_ministerial/"
-	FUNCTION_MINISTERIAL_USER_MSVC_URL = "http://localhost:3005/api/function_ministerial/user"
+	FUNCTION_MINISTERIAL_USER_MSVC_URL = "http://localhost:3005/api/function_ministerial/user/"
 )
 const (
 	ROL_ID    = "The id rol not exist"
