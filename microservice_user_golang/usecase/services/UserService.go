@@ -13,6 +13,7 @@ import (
 	"microservice_user.com/infrastructure/utils"
 	"microservice_user.com/usecase/client"
 	"microservice_user.com/usecase/client/church"
+	"microservice_user.com/usecase/client/functionministerial"
 	"microservice_user.com/usecase/client/ministerial"
 
 	"microservice_user.com/usecase/client/rol"
@@ -78,6 +79,8 @@ func (s *userService) GetUsersMembersFindAll(c *fiber.Ctx) error {
 
 		dataMinisterials := ministerial.MsvcUserMInisterialFindById(item.Id)
 		userResponseDate.UserMinisterial = dataMinisterials
+		dataFunctionMinisterials := functionministerial.MsvcUserFunctionMInisterialFindById(item.Id)
+		userResponseDate.FunctionMinisterial = dataFunctionMinisterials
 		userR = append(userR, userResponseDate)
 	}
 	return c.Status(http.StatusOK).JSON(fiber.Map{
