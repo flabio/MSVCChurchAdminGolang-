@@ -32,7 +32,7 @@ func DatabaseConnection() *gorm.DB {
 	if err != nil {
 		panic(err.Error())
 	}
-	db.AutoMigrate(&entities.FunctionMinisterial{})
+	db.AutoMigrate(&entities.FunctionMinisterial{}, &entities.UserFunctionMinisterial{})
 	return db
 }
 

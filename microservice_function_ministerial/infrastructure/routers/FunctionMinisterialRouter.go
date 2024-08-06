@@ -7,10 +7,9 @@ import (
 )
 
 var (
-	functionMinisterial handler.IFunctionMinisterialHandler = handler.NewFunctionMinisterialHandler()
+	functionMinisterial     handler.IFunctionMinisterialHandler     = handler.NewFunctionMinisterialHandler()
+	userFunctionMinisterial handler.IUserFunctionMinisterialHandler = handler.NewUserFunctionMinisterialHandler()
 )
-
-
 
 func NewRouter(app *fiber.App) {
 
@@ -31,4 +30,14 @@ func NewRouter(app *fiber.App) {
 		return functionMinisterial.Delete(c)
 	})
 
+	userGroupFunctionMinisterial := app.Group("/api/function_ministerial/user")
+	userGroupFunctionMinisterial.Get("/:id", func(c *fiber.Ctx) error {
+		return userFunctionMinisterial.GetFunctionMinisterialAndUserByIdFindAll(c)
+	})
+	userGroupFunctionMinisterial.Post("/", func(c *fiber.Ctx) error {
+		return userFunctionMinisterial.AddUserToFunctionMinisterial(c)
+	})
+	userGroupFunctionMinisterial.Delete("/:id", func(c *fiber.Ctx) error {
+		return userFunctionMinisterial.DeleteUserFunctionMinisterial(c)
+	})
 }

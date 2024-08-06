@@ -6,14 +6,7 @@ import (
 	"msvc_function_ministerial/infrastructure/entities"
 	"msvc_function_ministerial/infrastructure/utils"
 	"sync"
-
-	"gorm.io/gorm"
 )
-
-type OpenConnection struct {
-	connection *gorm.DB
-	mux        sync.Mutex
-}
 
 func GetFunctionMinisterialInstance() interfaces.IFunctionMinisterial {
 	var (
