@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"microservice_user.com/usecase/client/church"
+	"microservice_user.com/usecase/client/functionministerial"
+	"microservice_user.com/usecase/client/ministerial"
 	"microservice_user.com/usecase/client/rol"
 	"microservice_user.com/usecase/client/teams"
 )
@@ -89,15 +91,16 @@ type UserUpdateDTO struct {
 }
 
 type UserReponse struct {
-	Id              uint
-	FirstName       string          `json:"first_name"`
-	LastName        string          `json:"last_name"`
-	Email           string          `json:"email"`
-	Phone           string          `json:"phone"`
-	Churchs         []church.Church `json:"church"`
-	Team            []teams.Team    `json:"team"`
-	Rol             []rol.Rol       `json:"rol"`
-	UserMinisterial string          `json:"ministerial"`
+	Id                  uint
+	FirstName           string                                    `json:"first_name"`
+	LastName            string                                    `json:"last_name"`
+	Email               string                                    `json:"email"`
+	Phone               string                                    `json:"phone"`
+	Churchs             []church.Church                           `json:"church"`
+	Team                []teams.Team                              `json:"team"`
+	Rol                 []rol.Rol                                 `json:"rol"`
+	UserMinisterial     []ministerial.Ministerial                 `json:"ministerial"`
+	FunctionMinisterial []functionministerial.FunctionMinisterial `json:"functionministerial"`
 }
 
 type UserResposeDTO struct {

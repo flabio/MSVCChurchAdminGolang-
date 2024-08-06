@@ -3,11 +3,12 @@ package ministerial
 import "time"
 
 type Ministerial struct {
-	Active    bool
-	CreatedAt time.Time
-	UpdatedAt *time.Time
-	Id        uint
-	Name      string
+	Id            uint
+	Name          string
+	Active        bool
+	MinisterialId uint
+	CreatedAt     time.Time
+	UpdatedAt     *time.Time
 }
 
 type UserMinisterial struct {

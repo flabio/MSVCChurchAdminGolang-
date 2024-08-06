@@ -1,4 +1,4 @@
-package ministerial
+package functionministerial
 
 import (
 	"encoding/json"
@@ -8,10 +8,10 @@ import (
 	"microservice_user.com/usecase/client"
 )
 
-func ResponseUserMinisterialClient(data *http.Request, err error) ([]Ministerial, string) {
+func ResponseUserFunctionMinisterialClient(data *http.Request, err error) ([]FunctionMinisterial, string) {
 	var msg string = ""
-	var ministerial Ministerial
-	var ministerials []Ministerial
+	var ministerial FunctionMinisterial
+	var ministerials []FunctionMinisterial
 
 	if err != nil {
 		msg = err.Error()
