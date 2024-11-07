@@ -1,11 +1,12 @@
 package services
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gookit/validate"
 	"github.com/ulule/deepcopier"
 	"microservice_church.com/core/interfaces"
 	"microservice_church.com/core/repositories"
@@ -57,15 +58,15 @@ func (s *churchService) GetChurchFindById(c *fiber.Ctx) error {
 }
 func (s *churchService) CreateChurch(c *fiber.Ctx) error {
 	var churchCreate entities.Church
-	churchDto := new(dto.ChurchDTO)
-	msgError := validateChurch(0, churchDto, s, c)
+	var churchDto dto.ChurchDTO
+	church, msgError := validateChurch(0, churchDto, s, c)
 	if msgError != "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			utils.STATUS:  http.StatusBadRequest,
 			utils.MESSAGE: msgError,
 		})
 	}
-	deepcopier.Copy(churchDto).To(&churchCreate)
+	deepcopier.Copy(church).To(&churchCreate)
 	result, err := s.IChurch.CreateChurch(churchCreate)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
@@ -83,7 +84,7 @@ func (s *churchService) CreateChurch(c *fiber.Ctx) error {
 func (s *churchService) UpdateChurch(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params(utils.ID))
 	var churchUpdate entities.Church
-	churchDto := new(dto.ChurchDTO)
+	var churchDto dto.ChurchDTO
 
 	findById, _ := s.IChurch.GetChurchFindById(uint(id))
 	if findById.Id == 0 {
@@ -92,17 +93,14 @@ func (s *churchService) UpdateChurch(c *fiber.Ctx) error {
 			utils.MESSAGE: utils.ID_NO_EXIST,
 		})
 	}
-
-	msgError := validateChurch(uint(id), churchDto, s, c)
+	church, msgError := validateChurch(uint(id), churchDto, s, c)
 	if msgError != "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			utils.STATUS:  http.StatusBadRequest,
 			utils.MESSAGE: msgError,
 		})
 	}
-
-	deepcopier.Copy(churchDto).To(&churchUpdate)
-
+	deepcopier.Copy(church).To(&churchUpdate)
 	result, err := s.IChurch.UpdateChurch(uint(id), churchUpdate)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
@@ -142,15 +140,26 @@ func (s *churchService) DeleteChurch(c *fiber.Ctx) error {
 	})
 }
 
-func validateChurch(id uint, churchDto *dto.ChurchDTO, s *churchService, c *fiber.Ctx) string {
+func validateChurch(id uint, churchDto dto.ChurchDTO, s *churchService, c *fiber.Ctx) (dto.ChurchDTO, string) {
 	var msg string = ""
-	if err := c.BodyParser(churchDto); err != nil {
-		msg = err.Error()
+	b := c.Body()
+	var dataMap map[string]interface{}
+	errJson := json.Unmarshal([]byte(b), &dataMap)
+	if errJson != nil {
+		msg = errJson.Error()
 	}
-	v := validate.Struct(churchDto)
-	if !v.Validate() {
-		msg = v.Errors.Error()
+
+	msgValid := validateField(dataMap)
+	if msgValid != "" {
+		return dto.ChurchDTO{}, msgValid
 	}
+
+	MapToStruct(&churchDto, dataMap)
+	msgRequired := validateRequired(churchDto)
+	if msgRequired != "" {
+		return dto.ChurchDTO{}, msgRequired
+	}
+	log.Println(churchDto)
 	existName, _ := s.IChurch.GetChurchFindByName(id, churchDto.Name)
 	if existName {
 		msg = utils.NAME_ALREADY_EXIST
@@ -159,5 +168,56 @@ func validateChurch(id uint, churchDto *dto.ChurchDTO, s *churchService, c *fibe
 	if existEmail {
 		msg = utils.EMAIL_ALREADY_EXIST
 	}
+	return churchDto, msg
+}
+
+func MapToStruct(dataDto *dto.ChurchDTO, dataMap map[string]interface{}) {
+	rol := dto.ChurchDTO{
+		Name:    dataMap["name"].(string),
+		Email:   dataMap["email"].(string),
+		Address: dataMap["address"].(string),
+		Phone:   dataMap["phone"].(string),
+		Active:  dataMap["active"].(bool),
+	}
+	*dataDto = rol
+}
+func validateField(value map[string]interface{}) string {
+	var msg string = ""
+	if value["name"] == nil {
+		msg = "The field name is required"
+	}
+	if value["email"] == nil {
+		msg = "The field email is required"
+	}
+	if value["address"] == nil {
+		msg = "The field address is required"
+	}
+	if value["phone"] == nil {
+		msg = "The field phone is required"
+	}
+	// if value["active"] == nil {
+	// 	msg = "The field active is required"
+	// }
+	return msg
+}
+
+func validateRequired(field dto.ChurchDTO) string {
+	var msg string = ""
+	if field.Name == "" {
+		msg = "The name is required"
+	}
+	if field.Email == "" {
+		msg = "The email is required"
+	}
+	if field.Address == "" {
+		msg = "The address is required"
+	}
+	if field.Phone == "" {
+		msg = "The phone is required"
+	}
+	if field.Active == false {
+		msg = "The active field is required"
+	}
+
 	return msg
 }

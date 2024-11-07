@@ -1,11 +1,11 @@
 package services
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gookit/validate"
 	"github.com/ulule/deepcopier"
 	"microservice_rol.com/core/interfaces"
 	"microservice_rol.com/core/repositories"
@@ -23,7 +23,6 @@ func NewRolService() IRolService {
 		Irol: repositories.GetRolInstance(),
 	}
 }
-
 func (rolService *rolService) GetFindAll(c *fiber.Ctx) error {
 	result, err := rolService.Irol.GetFindAll()
 	if err != nil {
@@ -40,35 +39,32 @@ func (rolService *rolService) GetFindAll(c *fiber.Ctx) error {
 func (rolService *rolService) GetFindById(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params(utils.ID))
 	result, err := rolService.Irol.GetFindById(id)
-
 	if result.Id == 0 {
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{
 			utils.STATUS:  http.StatusNotFound,
 			utils.MESSAGE: utils.ID_NO_EXIST,
 		})
 	}
-
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			utils.STATUS:  http.StatusBadRequest,
 			utils.MESSAGE: err.Error(),
 		})
 	}
-
 	return c.Status(http.StatusOK).JSON(result)
 }
 func (rolService *rolService) Create(c *fiber.Ctx) error {
 	var rolCreate entities.Rol
-	rol := new(dto.RolDTO)
+	var rol dto.RolDTO
 
-	msgError := validateRol(0, rol, rolService, c)
+	rolDto, msgError := validateRol(0, rol, rolService, c)
 	if msgError != "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			utils.STATUS:  http.StatusBadRequest,
 			utils.MESSAGE: msgError,
 		})
 	}
-	deepcopier.Copy(rol).To(&rolCreate)
+	deepcopier.Copy(rolDto).To(&rolCreate)
 	result, err := rolService.Irol.Create(rolCreate)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
@@ -83,10 +79,8 @@ func (rolService *rolService) Create(c *fiber.Ctx) error {
 	})
 }
 func (rolService *rolService) Update(c *fiber.Ctx) error {
-
 	var rolEntity entities.Rol
-	rolDto := new(dto.RolDTO)
-
+	var rolDto dto.RolDTO
 	id, _ := strconv.Atoi(c.Params(utils.ID))
 	rol, _ := rolService.Irol.GetFindById(id)
 	if rol.Id == 0 {
@@ -95,18 +89,15 @@ func (rolService *rolService) Update(c *fiber.Ctx) error {
 			utils.MESSAGE: utils.ID_NO_EXIST,
 		})
 	}
-
-	msgError := validateRol(rol.Id, rolDto, rolService, c)
+	rolUpdate, msgError := validateRol(rol.Id, rolDto, rolService, c)
 	if msgError != "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			utils.STATUS:  http.StatusBadRequest,
 			utils.MESSAGE: msgError,
 		})
 	}
-
-	deepcopier.Copy(rolDto).To(&rolEntity)
+	deepcopier.Copy(rolUpdate).To(&rolEntity)
 	result, err := rolService.Irol.Update(rol.Id, rolEntity)
-
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			utils.STATUS:  http.StatusBadRequest,
@@ -142,18 +133,51 @@ func (rolService *rolService) Delete(c *fiber.Ctx) error {
 		utils.DATA:    result,
 	})
 }
-func validateRol(id uint, rolDto *dto.RolDTO, rolService *rolService, c *fiber.Ctx) string {
+func validateRol(id uint, rolDto dto.RolDTO, s *rolService, c *fiber.Ctx) (dto.RolDTO, string) {
 	var msg string = ""
-	if err := c.BodyParser(rolDto); err != nil {
-		msg = err.Error()
+	b := c.Body()
+	var dataMap map[string]interface{}
+	errJson := json.Unmarshal([]byte(b), &dataMap)
+	if errJson != nil {
+		msg = errJson.Error()
 	}
-	v := validate.Struct(rolDto)
-	if !v.Validate() {
-		msg = v.Errors.Error()
+	msgValid := validateField(dataMap)
+	if msgValid != "" {
+		return dto.RolDTO{}, msgValid
 	}
-	existName, _ := rolService.Irol.GetFindByName(id, rolDto.Name)
+	MapToStruct(&rolDto, dataMap)
+	msgRequired := validateRequired(rolDto)
+	if msgRequired != "" {
+		return dto.RolDTO{}, msgRequired
+	}
+	existName, _ := s.Irol.GetFindByName(id, rolDto.Name)
 	if existName {
 		msg = utils.NAME_ALREADY_EXIST
+	}
+	return rolDto, msg
+}
+
+func MapToStruct(dataDto *dto.RolDTO, dataMap map[string]interface{}) {
+	rol := dto.RolDTO{
+		Name:   dataMap["name"].(string),
+		Active: dataMap["active"].(bool),
+	}
+	*dataDto = rol
+}
+func validateField(value map[string]interface{}) string {
+	var msg string = ""
+	if value["name"] == nil {
+		msg = "The field name is required"
+	}
+	if value["active"] == nil {
+		msg = "The field active is required"
+	}
+	return msg
+}
+func validateRequired(field dto.RolDTO) string {
+	var msg string = ""
+	if field.Name == "" {
+		msg = "The name is required"
 	}
 	return msg
 }

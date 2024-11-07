@@ -1,27 +1,25 @@
 package repositories
 
 import (
+	"log"
 	"msvc_function_ministerial/core/interfaces"
 	"msvc_function_ministerial/infrastructure/database"
 	"msvc_function_ministerial/infrastructure/entities"
 	"msvc_function_ministerial/infrastructure/utils"
-	"sync"
 )
 
 func GetFunctionMinisterialInstance() interfaces.IFunctionMinisterial {
-	var (
-		_OPEN *OpenConnection
-		_ONCE sync.Once
-	)
-
-	_ONCE.Do(func() {
-		_OPEN = &OpenConnection{
-			connection: database.DatabaseConnection(),
+	_once.Do(func() {
+		db, err := database.DatabaseConnection()
+		if err != nil {
+			log.Fatalf("Error al conectar a la base de datos: %v", err)
+		}
+		_openInstance = &OpenConnection{
+			connection: db,
 		}
 	})
-	return _OPEN
+	return _openInstance
 }
-
 func (db *OpenConnection) GetFindAll() ([]entities.FunctionMinisterial, error) {
 	var roles []entities.FunctionMinisterial
 	db.mux.Lock()

@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"log"
 	"sync"
 
 	"gorm.io/gorm"
@@ -13,15 +14,21 @@ type OpenConnection struct {
 	mux        sync.Mutex
 }
 
+var (
+	_openInstance *OpenConnection
+	_once         sync.Once
+)
+
+// GetChurchInstance retorna una instancia singleton de OpenConnection que implementa interfaces.IChurch
 func GetChurchInstance() interfaces.IChurch {
-	var (
-		_OPEN *OpenConnection
-		_ONCE sync.Once
-	)
-	_ONCE.Do(func() {
-		_OPEN = &OpenConnection{
-			connection: database.DatabaseConnection(),
+	_once.Do(func() {
+		db, err := database.DatabaseConnection()
+		if err != nil {
+			log.Fatalf("Error al conectar a la base de datos: %v", err)
+		}
+		_openInstance = &OpenConnection{
+			connection: db,
 		}
 	})
-	return _OPEN
+	return _openInstance
 }

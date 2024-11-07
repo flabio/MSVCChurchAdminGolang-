@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/json"
 	"msvc_function_ministerial/core/interfaces"
 	"msvc_function_ministerial/core/repositories"
 	"msvc_function_ministerial/infrastructure/entities"
@@ -10,7 +11,6 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gookit/validate"
 	"github.com/ulule/deepcopier"
 )
 
@@ -40,14 +40,12 @@ func (s *functionMinisterialService) GetFindAll(c *fiber.Ctx) error {
 func (s *functionMinisterialService) GetFindById(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params(utils.ID))
 	result, err := s.IfunctionMinisterial.GetFindById(id)
-
 	if result.Id == 0 {
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{
 			utils.STATUS:  http.StatusNotFound,
 			utils.MESSAGE: utils.ID_NO_EXIST,
 		})
 	}
-
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			utils.STATUS:  http.StatusBadRequest,
@@ -59,16 +57,15 @@ func (s *functionMinisterialService) GetFindById(c *fiber.Ctx) error {
 }
 func (s *functionMinisterialService) Create(c *fiber.Ctx) error {
 	var create entities.FunctionMinisterial
-	functionMinisterial := new(dto.FunctionMinisterialDTO)
-
-	msgError := validateRol(0, functionMinisterial, s, c)
+	var functionMinisterial dto.FunctionMinisterialDTO
+	data, msgError := validateRol(0, functionMinisterial, s, c)
 	if msgError != "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			utils.STATUS:  http.StatusBadRequest,
 			utils.MESSAGE: msgError,
 		})
 	}
-	deepcopier.Copy(functionMinisterial).To(&create)
+	deepcopier.Copy(data).To(&create)
 	result, err := s.IfunctionMinisterial.Create(create)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
@@ -83,10 +80,8 @@ func (s *functionMinisterialService) Create(c *fiber.Ctx) error {
 	})
 }
 func (s *functionMinisterialService) Update(c *fiber.Ctx) error {
-
 	var functionMinisterialEntity entities.FunctionMinisterial
-	functionMinisterialDto := new(dto.FunctionMinisterialDTO)
-
+	var functionMinisterialDto dto.FunctionMinisterialDTO
 	id, _ := strconv.Atoi(c.Params(utils.ID))
 	functionMinisterial, _ := s.IfunctionMinisterial.GetFindById(id)
 	if functionMinisterial.Id == 0 {
@@ -95,18 +90,15 @@ func (s *functionMinisterialService) Update(c *fiber.Ctx) error {
 			utils.MESSAGE: utils.ID_NO_EXIST,
 		})
 	}
-
-	msgError := validateRol(functionMinisterial.Id, functionMinisterialDto, s, c)
+	data, msgError := validateRol(functionMinisterial.Id, functionMinisterialDto, s, c)
 	if msgError != "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			utils.STATUS:  http.StatusBadRequest,
 			utils.MESSAGE: msgError,
 		})
 	}
-
-	deepcopier.Copy(functionMinisterialDto).To(&functionMinisterialEntity)
+	deepcopier.Copy(data).To(&functionMinisterialEntity)
 	result, err := s.IfunctionMinisterial.Update(functionMinisterial.Id, functionMinisterialEntity)
-
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			utils.STATUS:  http.StatusBadRequest,
@@ -142,18 +134,47 @@ func (s *functionMinisterialService) Delete(c *fiber.Ctx) error {
 		utils.DATA:    result,
 	})
 }
-func validateRol(id uint, functionMinisterialDto *dto.FunctionMinisterialDTO, s *functionMinisterialService, c *fiber.Ctx) string {
+func validateRol(id uint, functionMinisterialDto dto.FunctionMinisterialDTO, s *functionMinisterialService, c *fiber.Ctx) (dto.FunctionMinisterialDTO, string) {
 	var msg string = ""
-	if err := c.BodyParser(functionMinisterialDto); err != nil {
-		msg = err.Error()
+	b := c.Body()
+	var dataMap map[string]interface{}
+	errJson := json.Unmarshal([]byte(b), &dataMap)
+	if errJson != nil {
+		msg = errJson.Error()
 	}
-	v := validate.Struct(functionMinisterialDto)
-	if !v.Validate() {
-		msg = v.Errors.Error()
+	msgValid := validateField(dataMap)
+	if msgValid != "" {
+		return dto.FunctionMinisterialDTO{}, msgValid
+	}
+	MapToStructFucntion(&functionMinisterialDto, dataMap)
+	msgRequired := validateRequiredFucntion(functionMinisterialDto)
+	if msgRequired != "" {
+		return dto.FunctionMinisterialDTO{}, msgRequired
 	}
 	existName, _ := s.IfunctionMinisterial.GetFindByName(id, functionMinisterialDto.Name)
 	if existName {
 		msg = utils.NAME_ALREADY_EXIST
+	}
+	return functionMinisterialDto, msg
+}
+func MapToStructFucntion(dataDto *dto.FunctionMinisterialDTO, dataMap map[string]interface{}) {
+	fiels := dto.FunctionMinisterialDTO{
+		Name:   dataMap["name"].(string),
+		Active: dataMap["active"].(bool),
+	}
+	*dataDto = fiels
+}
+func validateFieldFucntion(value map[string]interface{}) string {
+	var msg string = ""
+	if value["name"] == nil {
+		msg = "The field name is required"
+	}
+	return msg
+}
+func validateRequiredFucntion(field dto.FunctionMinisterialDTO) string {
+	var msg string = ""
+	if field.Name == "" {
+		msg = "The Name is required"
 	}
 	return msg
 }

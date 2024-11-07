@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"log"
 	"sync"
 
 	"microservice_ministerial.com/core/interfaces"
@@ -9,17 +10,22 @@ import (
 	"microservice_ministerial.com/infrastructure/utils"
 )
 
+var (
+	_openInstanceM *OpenConnection
+	_onceM         sync.Once
+)
+
 func Instance() interfaces.IMinisterial {
-	var (
-		_OPEN *OpenConnection
-		_ONCE sync.Once
-	)
-	_ONCE.Do(func() {
-		_OPEN = &OpenConnection{
-			connection: database.DatabaseConnection(),
+	_onceM.Do(func() {
+		db, err := database.DatabaseConnection()
+		if err != nil {
+			log.Fatalf("Error al conectar a la base de datos: %v", err)
+		}
+		_openInstanceM = &OpenConnection{
+			connection: db,
 		}
 	})
-	return _OPEN
+	return _openInstance
 }
 
 func (db *OpenConnection) GetMinisterialAll() ([]entities.Ministerial, error) {

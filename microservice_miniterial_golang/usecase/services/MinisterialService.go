@@ -1,11 +1,11 @@
 package services
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gookit/validate"
 	"github.com/ulule/deepcopier"
 	"microservice_ministerial.com/core/interfaces"
 	"microservice_ministerial.com/core/repository"
@@ -51,16 +51,15 @@ func (s *minitsrialService) GetMinisterialFindById(c *fiber.Ctx) error {
 }
 func (s *minitsrialService) CreateMinisterial(c *fiber.Ctx) error {
 	var ministrial entities.Ministerial
-	ministerialDTO := new(dto.MinisterialDTO)
-
-	msgErr := validateMInisterial(0, ministerialDTO, s, c)
+	var ministerialDTO dto.MinisterialDTO
+	data, msgErr := validateMInisterial(0, ministerialDTO, s, c)
 	if msgErr != "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			utils.STATUS:  http.StatusBadRequest,
 			utils.MESSAGE: msgErr,
 		})
 	}
-	deepcopier.Copy(ministerialDTO).To(&ministrial)
+	deepcopier.Copy(data).To(&ministrial)
 	newMinistrial, err := s.Iministerial.CreateMinisterial(ministrial)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -77,8 +76,7 @@ func (s *minitsrialService) CreateMinisterial(c *fiber.Ctx) error {
 func (s *minitsrialService) UpdateMinisterial(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params(utils.ID))
 	var ministrial entities.Ministerial
-	ministrialDTO := new(dto.MinisterialDTO)
-
+	var ministrialDTO dto.MinisterialDTO
 	findById, _ := s.Iministerial.GetMinisterialFindById(uint(id))
 	if findById.Id == 0 {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -86,15 +84,14 @@ func (s *minitsrialService) UpdateMinisterial(c *fiber.Ctx) error {
 			utils.MESSAGE: utils.ID_NO_EXIST,
 		})
 	}
-	msgErr := validateMInisterial(uint(id), ministrialDTO, s, c)
+	data, msgErr := validateMInisterial(uint(id), ministrialDTO, s, c)
 	if msgErr != "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			utils.STATUS:  http.StatusBadRequest,
 			utils.MESSAGE: msgErr,
 		})
 	}
-	deepcopier.Copy(ministrialDTO).To(&ministrial)
-
+	deepcopier.Copy(data).To(&ministrial)
 	updatedMinistrial, err := s.Iministerial.UpdateMinisterial(uint(id), ministrial)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -130,18 +127,51 @@ func (s *minitsrialService) DeleteMinisterial(c *fiber.Ctx) error {
 	})
 }
 
-func validateMInisterial(id uint, ministerialDTO *dto.MinisterialDTO, s *minitsrialService, c *fiber.Ctx) string {
+func validateMInisterial(id uint, ministerialDTO dto.MinisterialDTO, s *minitsrialService, c *fiber.Ctx) (dto.MinisterialDTO, string) {
 	var msg string = ""
-	if err := c.BodyParser(ministerialDTO); err != nil {
-		msg = err.Error()
+	b := c.Body()
+	var dataMap map[string]interface{}
+	errJson := json.Unmarshal([]byte(b), &dataMap)
+	if errJson != nil {
+		msg = errJson.Error()
 	}
-	v := validate.Struct(ministerialDTO)
-	if !v.Validate() {
-		msg = v.Errors.Error()
+	msgValid := validateField(dataMap)
+	if msgValid != "" {
+		return dto.MinisterialDTO{}, msgValid
+	}
+	MapToStruct(&ministerialDTO, dataMap)
+	msgRequired := validateRequired(ministerialDTO)
+	if msgRequired != "" {
+		return dto.MinisterialDTO{}, msgRequired
 	}
 	existName, _ := s.Iministerial.GetMinisterialFindByName(id, ministerialDTO.Name)
 	if existName {
 		msg = utils.NAME_ALREADY_EXIST
+	}
+	return ministerialDTO, msg
+}
+
+func MapToStruct(dataDto *dto.MinisterialDTO, dataMap map[string]interface{}) {
+	fields := dto.MinisterialDTO{
+		Name:   dataMap["name"].(string),
+		Active: dataMap["active"].(bool),
+	}
+	*dataDto = fields
+}
+func validateField(value map[string]interface{}) string {
+	var msg string = ""
+	if value["name"] == nil {
+		msg = "The field name is required"
+	}
+	if value["active"] == nil {
+		msg = "The field active is required"
+	}
+	return msg
+}
+func validateRequired(field dto.MinisterialDTO) string {
+	var msg string = ""
+	if field.Name == "" {
+		msg = "The name is required"
 	}
 	return msg
 }

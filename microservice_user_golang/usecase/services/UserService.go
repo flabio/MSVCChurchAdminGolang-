@@ -1,11 +1,11 @@
 package services
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gookit/validate"
 	"github.com/ulule/deepcopier"
 	"microservice_user.com/core/interfaces"
 	"microservice_user.com/core/repsitories"
@@ -46,14 +46,12 @@ func (s *userService) GetUserFindAll(c *fiber.Ctx) error {
 }
 func (s *userService) GetUsersMembersFindAll(c *fiber.Ctx) error {
 	result, err := s.IUser.GetUsersMembersFindAll()
-
 	if err != nil {
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{
 			utils.STATUS:  http.StatusNotFound,
 			utils.MESSAGE: err.Error(),
 		})
 	}
-
 	var userR []dto.UserReponse
 	for _, item := range result {
 		var userResponseDate dto.UserReponse
@@ -68,15 +66,12 @@ func (s *userService) GetUsersMembersFindAll(c *fiber.Ctx) error {
 		dataRol := rol.MsvcRolFindById(item.RolId)
 		rols = append(rols, dataRol)
 		userResponseDate.Rol = rols
-
 		dataChurch := church.MsvcChurchFindById(item.ChurchId)
 		churchs = append(churchs, dataChurch)
 		userResponseDate.Churchs = churchs
-
 		dataTeam := teams.MsvcTeamFindById(item.TeamPescaId)
 		teamsPesca = append(teamsPesca, dataTeam)
 		userResponseDate.Team = teamsPesca
-
 		dataMinisterials := ministerial.MsvcUserMInisterialFindById(item.Id)
 		userResponseDate.UserMinisterial = dataMinisterials
 		dataFunctionMinisterials := functionministerial.MsvcUserFunctionMInisterialFindById(item.Id)
@@ -89,9 +84,7 @@ func (s *userService) GetUsersMembersFindAll(c *fiber.Ctx) error {
 	})
 }
 func (s *userService) GetUserFindById(c *fiber.Ctx) error {
-
 	id, _ := strconv.Atoi(c.Params(utils.ID))
-
 	result, err := s.IUser.GetUserFindById(uint(id))
 	if err != nil {
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{
@@ -109,15 +102,14 @@ func (s *userService) GetUserFindById(c *fiber.Ctx) error {
 }
 func (s *userService) CreateUser(c *fiber.Ctx) error {
 	var user entities.User
-	userDTO := new(dto.UserDTO)
-	msgError := vaidateCreate(userDTO, s, c)
+	var userDTO dto.UserDTO
+	userCreate, msgError := validateUser(0, userDTO, s, c)
 	if msgError != "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			utils.STATUS:  http.StatusBadRequest,
 			utils.MESSAGE: msgError,
 		})
 	}
-
 	msgMsvcRol := rol.MsvcRolById(userDTO.RolId)
 	if msgMsvcRol != "" {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
@@ -132,8 +124,7 @@ func (s *userService) CreateUser(c *fiber.Ctx) error {
 			utils.MESSAGE: msgMsvcChurch,
 		})
 	}
-
-	deepcopier.Copy(userDTO).To(&user)
+	deepcopier.Copy(userCreate).To(&user)
 	result, err := s.IUser.CreateUser(user)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
@@ -151,8 +142,7 @@ func (s *userService) CreateUser(c *fiber.Ctx) error {
 func (s *userService) UpdateUser(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params(utils.ID))
 	var user entities.User
-	userDTO := new(dto.UserUpdateDTO)
-
+	var userDTO dto.UserDTO
 	findById, _ := s.IUser.GetUserFindById(uint(id))
 	if findById.Id == 0 {
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{
@@ -160,15 +150,14 @@ func (s *userService) UpdateUser(c *fiber.Ctx) error {
 			utils.MESSAGE: utils.ID_NO_EXIST,
 		})
 	}
-
-	msgError := validateUpdate(uint(id), userDTO, s, c)
+	userUpdate, msgError := validateUser(uint(id), userDTO, s, c)
 	if msgError != "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			utils.STATUS:  http.StatusBadRequest,
 			utils.MESSAGE: msgError,
 		})
 	}
-	deepcopier.Copy(userDTO).To(&user)
+	deepcopier.Copy(userUpdate).To(&user)
 	result, err := s.IUser.UpdateUser(uint(id), user)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
@@ -204,37 +193,23 @@ func (s *userService) DeleteUser(c *fiber.Ctx) error {
 		utils.DATA:    result,
 	})
 }
-func vaidateCreate(userDTO *dto.UserDTO, s *userService, c *fiber.Ctx) string {
+
+func validateUser(id uint, userDTO dto.UserDTO, s *userService, c *fiber.Ctx) (dto.UserDTO, string) {
 	var msg string = ""
-	if err := c.BodyParser(userDTO); err != nil {
-		msg = err.Error()
+	b := c.Body()
+	var dataMap map[string]interface{}
+	errJson := json.Unmarshal([]byte(b), &dataMap)
+	if errJson != nil {
+		msg = errJson.Error()
 	}
-	v := validate.Struct(userDTO)
-	if !v.Validate() {
-		msg = v.Errors.Error()
+	msgValid := validateField(dataMap)
+	if msgValid != "" {
+		return dto.UserDTO{}, msgValid
 	}
-	existIdentification, _ := s.IUser.GetUserFindByIdentification(0, userDTO.Identification)
-	if existIdentification {
-		msg = utils.IDENTIFICATION_ALREADY_EXIST
-	}
-	existEmail, _ := s.IUser.GetUserFindByEmail(0, userDTO.Email)
-	if existEmail {
-		msg = utils.EMAIL_ALREADY_EXIST
-	}
-	existUsername, _ := s.IUser.GetUserFindByUsername(0, userDTO.Username)
-	if existUsername {
-		msg = utils.USERNAME_ALREADY_EXIST
-	}
-	return msg
-}
-func validateUpdate(id uint, userDTO *dto.UserUpdateDTO, s *userService, c *fiber.Ctx) string {
-	var msg string = ""
-	if err := c.BodyParser(userDTO); err != nil {
-		msg = err.Error()
-	}
-	v := validate.Struct(userDTO)
-	if !v.Validate() {
-		msg = v.Errors.Error()
+	MapToStruct(&userDTO, dataMap)
+	msgRequired := validateRequired(userDTO)
+	if msgRequired != "" {
+		return dto.UserDTO{}, msgRequired
 	}
 	existIdentification, _ := s.IUser.GetUserFindByIdentification(id, userDTO.Identification)
 	if existIdentification {
@@ -243,6 +218,62 @@ func validateUpdate(id uint, userDTO *dto.UserUpdateDTO, s *userService, c *fibe
 	existEmail, _ := s.IUser.GetUserFindByEmail(id, userDTO.Email)
 	if existEmail {
 		msg = utils.EMAIL_ALREADY_EXIST
+	}
+	return userDTO, msg
+}
+
+func MapToStruct(dataDto *dto.UserDTO, dataMap map[string]interface{}) {
+	user := dto.UserDTO{
+		FirstName:          dataMap["first_name"].(string),
+		LastName:           dataMap["last_name"].(string),
+		Identification:     dataMap["identification"].(string),
+		Address:            dataMap["address"].(string),
+		Phone:              dataMap["phone"].(string),
+		TypeIdentification: dataMap["type_identification"].(string),
+	}
+	*dataDto = user
+}
+func validateField(value map[string]interface{}) string {
+	var msg string = ""
+	if value["first_name"] == nil {
+		msg = "The field name is required"
+	}
+	if value["last_name"] == nil {
+		msg = "The field last name is required"
+	}
+	if value["identification"] == nil {
+		msg = "The field identification is required"
+	}
+	if value["address"] == nil {
+		msg = "The field address is required"
+	}
+	if value["phone"] == nil {
+		msg = "The field phone is required"
+	}
+	if value["type_identification"] == nil {
+		msg = "The field type identification is required"
+	}
+	return msg
+}
+func validateRequired(field dto.UserDTO) string {
+	var msg string = ""
+	if field.FirstName == "" {
+		msg = "The first name is required"
+	}
+	if field.LastName == "" {
+		msg = "The last name is required"
+	}
+	if field.Identification == "" {
+		msg = "The identification is required"
+	}
+	if field.Address == "" {
+		msg = "The address is required"
+	}
+	if field.Phone == "" {
+		msg = "The phone is required"
+	}
+	if field.TypeIdentification == "" {
+		msg = "The sex is required"
 	}
 	return msg
 }

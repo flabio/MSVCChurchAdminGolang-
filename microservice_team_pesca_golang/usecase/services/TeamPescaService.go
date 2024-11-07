@@ -1,11 +1,11 @@
 package services
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gookit/validate"
 	"github.com/ulule/deepcopier"
 	"microservice_team_pesca.com/core/interfaces"
 	"microservice_team_pesca.com/core/repository"
@@ -50,20 +50,20 @@ func (s *teamPescaService) GetTeamPescaFindById(c *fiber.Ctx) error {
 			utils.MESSAGE: utils.ID_NO_EXIST,
 		})
 	}
-	return c.Status(http.StatusOK).JSON( result)
+	return c.Status(http.StatusOK).JSON(result)
 }
 func (s *teamPescaService) CreateTeamPesca(c *fiber.Ctx) error {
 	var createTeamPesca entities.TeamPesca
-	teamPescaDTO := new(dto.TeamPescaDTO)
+	var teamPescaDTO dto.TeamPescaDTO
 
-	msgError := validateTeamPesca(0, teamPescaDTO, s, c)
+	data, msgError := validateTeamPesca(0, teamPescaDTO, s, c)
 	if msgError != "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			utils.STATUS:  http.StatusBadRequest,
 			utils.MESSAGE: msgError,
 		})
 	}
-	deepcopier.Copy(teamPescaDTO).To(&createTeamPesca)
+	deepcopier.Copy(data).To(&createTeamPesca)
 	result, err := s.ITeamPesca.CreateTeamPesca(createTeamPesca)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
@@ -80,7 +80,7 @@ func (s *teamPescaService) CreateTeamPesca(c *fiber.Ctx) error {
 func (s *teamPescaService) UpdateTeamPesca(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params(utils.ID))
 	var updateTeamPesca entities.TeamPesca
-	teamPescaDTO := new(dto.TeamPescaDTO)
+	var teamPescaDTO dto.TeamPescaDTO
 	result, _ := s.ITeamPesca.GetTeamPescaFindById(uint(id))
 
 	if result.Id == 0 {
@@ -89,14 +89,14 @@ func (s *teamPescaService) UpdateTeamPesca(c *fiber.Ctx) error {
 			utils.MESSAGE: utils.ID_NO_EXIST,
 		})
 	}
-	msgError := validateTeamPesca(uint(id), teamPescaDTO, s, c)
+	data, msgError := validateTeamPesca(uint(id), teamPescaDTO, s, c)
 	if msgError != "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			utils.STATUS:  http.StatusBadRequest,
 			utils.MESSAGE: msgError,
 		})
 	}
-	deepcopier.Copy(teamPescaDTO).To(&updateTeamPesca)
+	deepcopier.Copy(data).To(&updateTeamPesca)
 	updateTeamPesca.Id = uint(id)
 	result, err := s.ITeamPesca.UpdateTeamPesca(uint(id), updateTeamPesca)
 	if err != nil {
@@ -114,7 +114,6 @@ func (s *teamPescaService) UpdateTeamPesca(c *fiber.Ctx) error {
 func (s *teamPescaService) DeleteTeamPesca(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params(utils.ID))
 	result, _ := s.ITeamPesca.GetTeamPescaFindById(uint(id))
-
 	if result.Id == 0 {
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{
 			utils.STATUS:  http.StatusNotFound,
@@ -135,18 +134,51 @@ func (s *teamPescaService) DeleteTeamPesca(c *fiber.Ctx) error {
 	})
 }
 
-func validateTeamPesca(id uint, teamPescaDto *dto.TeamPescaDTO, s *teamPescaService, c *fiber.Ctx) string {
+func validateTeamPesca(id uint, teamPescaDto dto.TeamPescaDTO, s *teamPescaService, c *fiber.Ctx) (dto.TeamPescaDTO, string) {
 	var msg string = ""
-	if err := c.BodyParser(teamPescaDto); err != nil {
-		msg = err.Error()
+	b := c.Body()
+	var dataMap map[string]interface{}
+	errJson := json.Unmarshal([]byte(b), &dataMap)
+	if errJson != nil {
+		msg = errJson.Error()
 	}
-	v := validate.Struct(teamPescaDto)
-	if !v.Validate() {
-		msg = v.Errors.Error()
+	msgValid := validateField(dataMap)
+	if msgValid != "" {
+		return dto.TeamPescaDTO{}, msgValid
+	}
+	MapToStruct(&teamPescaDto, dataMap)
+	msgRequired := validateRequired(teamPescaDto)
+	if msgRequired != "" {
+		return dto.TeamPescaDTO{}, msgRequired
 	}
 	existName, _ := s.ITeamPesca.GetTeamPescaFindByName(id, teamPescaDto.Name)
 	if existName {
 		msg = utils.NAME_ALREADY_EXIST
+	}
+	return teamPescaDto, msg
+}
+
+func MapToStruct(dataDto *dto.TeamPescaDTO, dataMap map[string]interface{}) {
+	fields := dto.TeamPescaDTO{
+		Name:   dataMap["name"].(string),
+		Active: dataMap["active"].(bool),
+	}
+	*dataDto = fields
+}
+func validateField(value map[string]interface{}) string {
+	var msg string = ""
+	if value["name"] == nil {
+		msg = "The field name is required"
+	}
+	if value["active"] == nil {
+		msg = "The field active is required"
+	}
+	return msg
+}
+func validateRequired(field dto.TeamPescaDTO) string {
+	var msg string = ""
+	if field.Name == "" {
+		msg = "The name is required"
 	}
 	return msg
 }

@@ -11,16 +11,16 @@ import (
 )
 
 type UserDTO struct {
-	FirstName          string `json:"first_name" validate:"required|min_len:3" message:"required:The {field} is required|min_len: min 3 caracters" label:"first_name"`
-	LastName           string `json:"last_name" validate:"required|min_len:3" message:"required:The {field} is required|min_len: min 3 caracters" label:"last_name"`
-	Identification     string `json:"identification"  validate:"required|min_len:3" message:"required:The {field} is required|min_len: min 3 caracters" label:"identification"`
+	FirstName          string `json:"first_name" `
+	LastName           string `json:"last_name"`
+	Identification     string `json:"identification"`
 	TypeIdentification string `json:"type_identification"`
 	Birthdate          string `json:"birthdate" `
 	PlaceOfBirth       string `json:"placeofbirth"`
 	Address            string `json:"address"`
 	Phone              string `json:"phone"`
 	Cellphone          string `json:"cellphone"`
-	Email              string `json:"email" validate:"required|min_len:3" message:"required:The {field} is required|min_len: min 3 caracters" label:"email"`
+	Email              string `json:"email"`
 	Neighborhood       string `json:"neighborhood"`
 	Locality           string `json:"locality"`
 	Socioeconomic      uint   `json:"socioeconomic"`
@@ -44,11 +44,11 @@ type UserDTO struct {
 	ChildrenaName      string `json:"childrena_name"`
 	Allergy            bool   `json:"allergy"`
 	Authorize          bool   `json:"authorize"`
-	Username           string `json:"username" validate:"required|min_len:3" message:"required:The {field} is required|min_len: min 3 caracters" label:"username"`
-	Password           string `json:"password" validate:"required|min_len:3" message:"required:The {field} is required|min_len: min 3 caracters" label:"password"`
-	ChurchId           uint   `json:"church_id" validate:"required" message:"required:The {field} is required " label:"church_id"`
-	RolId              uint   `json:"rol_id" validate:"required" message:"required:The {field} is required " label:"rol_id"`
-	TeamPescaId        uint   `json:"team_pesca_id" validate:"required" message:"required:The {field} is required " label:"team_pesca_id"`
+	Username           string `json:"username"`
+	Password           string `json:"password"`
+	ChurchId           uint   `json:"church_id"`
+	RolId              uint   `json:"rol_id"`
+	TeamPescaId        uint   `json:"team_pesca_id"`
 }
 
 type UserUpdateDTO struct {

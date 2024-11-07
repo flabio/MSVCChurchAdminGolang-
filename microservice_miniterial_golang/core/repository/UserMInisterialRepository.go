@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"log"
 	"sync"
 
 	"microservice_ministerial.com/core/interfaces"
@@ -10,17 +11,22 @@ import (
 	"microservice_ministerial.com/usecase/dto"
 )
 
+var (
+	_openInstance *OpenConnection
+	_once         sync.Once
+)
+
 func UserMinisterialInstance() interfaces.IUserMinisterial {
-	var (
-		_OPEN *OpenConnection
-		_ONCE sync.Once
-	)
-	_ONCE.Do(func() {
-		_OPEN = &OpenConnection{
-			connection: database.DatabaseConnection(),
+	_once.Do(func() {
+		db, err := database.DatabaseConnection()
+		if err != nil {
+			log.Fatalf("Error al conectar a la base de datos: %v", err)
+		}
+		_openInstance = &OpenConnection{
+			connection: db,
 		}
 	})
-	return _OPEN
+	return _openInstance
 }
 
 func (db *OpenConnection) GetMinisterialAndUserByIdFindAll(userId uint) ([]dto.MinisterialResponseDTO, error) {

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/json"
 	"msvc_function_ministerial/core/interfaces"
 	"msvc_function_ministerial/core/repositories"
 	"msvc_function_ministerial/infrastructure/entities"
@@ -10,7 +11,6 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gookit/validate"
 	"github.com/ulule/deepcopier"
 )
 
@@ -23,7 +23,6 @@ func NewUserFunctionMinistrialService() IUserFunctionMinisterialService {
 }
 func (s *userFunctionMinitsrialService) GetFunctionMinisterialAndUserByIdFindAll(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params(utils.ID))
-
 	result, err := s.IuserFunctionMinisterial.GetFunctionMinisterialAndUserByIdFindAll(uint(id))
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -31,23 +30,19 @@ func (s *userFunctionMinitsrialService) GetFunctionMinisterialAndUserByIdFindAll
 			utils.MESSAGE: err.Error(),
 		})
 	}
-
 	return c.Status(http.StatusOK).JSON(result)
-
 }
-
 func (s *userFunctionMinitsrialService) AddUserToFunctionMinisterial(c *fiber.Ctx) error {
 	var ministrial entities.UserFunctionMinisterial
-	ministerialDTO := new(dto.UserFunctionMinisterialDTO)
-
-	msgErr := validateUserMInisterial(ministerialDTO, c)
+	var ministerialDTO dto.UserFunctionMinisterialDTO
+	data, msgErr := validateUserMInisterial(ministerialDTO, c)
 	if msgErr != "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			utils.STATUS:  http.StatusBadRequest,
 			utils.MESSAGE: msgErr,
 		})
 	}
-	deepcopier.Copy(ministerialDTO).To(&ministrial)
+	deepcopier.Copy(data).To(&ministrial)
 	_, err := s.IuserFunctionMinisterial.AddUserToFunctionMinisterial(ministrial)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -63,7 +58,6 @@ func (s *userFunctionMinitsrialService) AddUserToFunctionMinisterial(c *fiber.Ct
 
 func (s *userFunctionMinitsrialService) DeleteUserFunctionMinisterial(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params(utils.ID))
-
 	result, err := s.IuserFunctionMinisterial.DeleteUserFunctionMinisterial(uint(id))
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -78,14 +72,50 @@ func (s *userFunctionMinitsrialService) DeleteUserFunctionMinisterial(c *fiber.C
 	})
 }
 
-func validateUserMInisterial(userMinisterialDTO *dto.UserFunctionMinisterialDTO, c *fiber.Ctx) string {
+func validateUserMInisterial(userMinisterialDTO dto.UserFunctionMinisterialDTO, c *fiber.Ctx) (dto.UserFunctionMinisterialDTO, string) {
 	var msg string = ""
-	if err := c.BodyParser(userMinisterialDTO); err != nil {
-		msg = err.Error()
+	b := c.Body()
+	var dataMap map[string]interface{}
+	errJson := json.Unmarshal([]byte(b), &dataMap)
+	if errJson != nil {
+		msg = errJson.Error()
 	}
-	v := validate.Struct(userMinisterialDTO)
-	if !v.Validate() {
-		msg = v.Errors.Error()
+	msgValid := validateField(dataMap)
+	if msgValid != "" {
+		return dto.UserFunctionMinisterialDTO{}, msgValid
+	}
+	MapToStruct(&userMinisterialDTO, dataMap)
+	msgRequired := validateRequired(userMinisterialDTO)
+	if msgRequired != "" {
+		return dto.UserFunctionMinisterialDTO{}, msgRequired
+	}
+	return userMinisterialDTO, msg
+}
+
+func MapToStruct(dataDto *dto.UserFunctionMinisterialDTO, dataMap map[string]interface{}) {
+	fiels := dto.UserFunctionMinisterialDTO{
+		FunctionMinisterialId: dataMap["function_ministerial_id"].(uint),
+		UserId:                dataMap["user_id"].(uint),
+	}
+	*dataDto = fiels
+}
+func validateField(value map[string]interface{}) string {
+	var msg string = ""
+	if value["function_ministerial_id"] == nil {
+		msg = "The field function_ministerial_id is required"
+	}
+	if value["user_id"] == nil {
+		msg = "The field user id is required"
+	}
+	return msg
+}
+func validateRequired(field dto.UserFunctionMinisterialDTO) string {
+	var msg string = ""
+	if field.FunctionMinisterialId == 0 {
+		msg = "The FunctionMinisterialId is required"
+	}
+	if field.UserId == 0 {
+		msg = "The UserId is required"
 	}
 	return msg
 }

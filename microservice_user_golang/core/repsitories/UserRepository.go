@@ -1,6 +1,7 @@
 package repsitories
 
 import (
+	"log"
 	"sync"
 
 	"gorm.io/gorm"
@@ -16,25 +17,29 @@ type OpenConnection struct {
 	mux        sync.Mutex
 }
 
+var (
+	_openInstance *OpenConnection
+	_once         sync.Once
+)
+
+// GetChurchInstance retorna una instancia singleton de OpenConnection que implementa interfaces.IChurch
 func UserInstance() interfaces.IUser {
-	var (
-		_OPEN *OpenConnection
-		_ONCE sync.Once
-	)
-	_ONCE.Do(func() {
-		_OPEN = &OpenConnection{
-			connection: database.DatabaseConnection(),
+	_once.Do(func() {
+		db, err := database.DatabaseConnection()
+		if err != nil {
+			log.Fatalf("Error al conectar a la base de datos: %v", err)
+		}
+		_openInstance = &OpenConnection{
+			connection: db,
 		}
 	})
-	return _OPEN
+	return _openInstance
 }
-
 func (db *OpenConnection) GetUserFindAll() ([]entities.User, error) {
 	var users []entities.User
 	db.mux.Lock()
 	result := db.connection.Find(&users)
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
 	return users, result.Error
 }
 func (db *OpenConnection) GetUsersMembersFindAll() ([]entities.User, error) {
@@ -42,7 +47,6 @@ func (db *OpenConnection) GetUsersMembersFindAll() ([]entities.User, error) {
 	db.mux.Lock()
 	result := db.connection.Where(utils.DB_ROL_ID_EQUAL, 6).Find(&users)
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
 	return users, result.Error
 }
 func (db *OpenConnection) GetUserFindById(id uint) (dto.UserResposeDTO, error) {
@@ -50,7 +54,6 @@ func (db *OpenConnection) GetUserFindById(id uint) (dto.UserResposeDTO, error) {
 	db.mux.Lock()
 	result := db.connection.Table("users").Find(&user, id)
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
 	return user, result.Error
 }
 func (db *OpenConnection) GetUserFindByEmail(id uint, email string) (bool, error) {
@@ -62,7 +65,7 @@ func (db *OpenConnection) GetUserFindByEmail(id uint, email string) (bool, error
 	query = query.Find(&entities.User{})
 
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
+
 	if query.RowsAffected == 0 {
 		return false, query.Error
 	}
@@ -76,7 +79,7 @@ func (db *OpenConnection) GetUserFindByName(id uint, name string) (bool, error) 
 	}
 	query = query.Find(&entities.User{})
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
+
 	if query.RowsAffected == 0 {
 		return false, query.Error
 	}
@@ -91,7 +94,7 @@ func (db *OpenConnection) GetUserFindByIdentification(id uint, identification st
 	query = query.Find(&entities.User{})
 
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
+
 	if query.RowsAffected == 0 {
 		return false, query.Error
 	}
@@ -106,7 +109,7 @@ func (db *OpenConnection) GetUserFindByUsername(id uint, username string) (bool,
 	query = query.Find(&entities.User{})
 
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
+
 	if query.RowsAffected == 0 {
 		return false, query.Error
 	}
@@ -117,7 +120,6 @@ func (db *OpenConnection) CreateUser(user entities.User) (entities.User, error) 
 	db.mux.Lock()
 	err := db.connection.Create(&user).Error
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
 	return user, err
 }
 func (db *OpenConnection) UpdateUser(id uint, user entities.User) (entities.User, error) {
@@ -125,13 +127,11 @@ func (db *OpenConnection) UpdateUser(id uint, user entities.User) (entities.User
 	query := db.connection.Where(utils.DB_EQUAL_ID, id).Updates(&user)
 	db.connection.Find(&user, id)
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
 	return user, query.Error
 }
 func (db *OpenConnection) DeleteUser(id uint) (bool, error) {
 	db.mux.Lock()
 	query := db.connection.Delete(&entities.User{}, id)
 	defer db.mux.Unlock()
-	defer database.CloseConnection()
 	return true, query.Error
 }

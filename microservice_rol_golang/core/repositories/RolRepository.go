@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"log"
 	"sync"
 
 	"gorm.io/gorm"
@@ -15,18 +16,22 @@ type OpenConnection struct {
 	mux        sync.Mutex
 }
 
-func GetRolInstance() interfaces.IRol {
-	var (
-		_OPEN *OpenConnection
-		_ONCE sync.Once
-	)
+var (
+	_openInstance *OpenConnection
+	_once         sync.Once
+)
 
-	_ONCE.Do(func() {
-		_OPEN = &OpenConnection{
-			connection: database.DatabaseConnection(),
+func GetRolInstance() interfaces.IRol {
+	_once.Do(func() {
+		db, err := database.DatabaseConnection()
+		if err != nil {
+			log.Fatalf("Error al conectar a la base de datos: %v", err)
+		}
+		_openInstance = &OpenConnection{
+			connection: db,
 		}
 	})
-	return _OPEN
+	return _openInstance
 }
 
 func (db *OpenConnection) GetFindAll() ([]entities.Rol, error) {
